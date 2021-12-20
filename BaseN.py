@@ -1,3 +1,6 @@
+import click
+
+
 class BaseN:
 
     def __init__(self, base):
@@ -126,3 +129,21 @@ class BaseN:
                 bytes = input.read(self.symbol_quantity)
             output.close()
         input.close()
+
+
+@click.command()
+@click.argument('input', type=click.Path(exists=True))
+@click.argument('output', type=click.Path())
+@click.option('-b', '--base', default=64, help='Base alphabet length.')
+@click.option('-e', '--encode', 'mode', flag_value='encode', default=True, help='Encode mode.')
+@click.option('-d', '--decode', 'mode', flag_value='decode', help='Decode mode.')
+def main(input, output, base, mode):
+    basen = BaseN(base)
+    if mode == 'encode':
+        basen.base_encode(input, output)
+    elif mode == 'decode':
+        basen.base_decode(input, output)
+
+
+if __name__ == "__main__":
+    main()
