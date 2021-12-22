@@ -4,9 +4,13 @@ import click
 class BaseN:
 
     def __init__(self, base):
-        if base == 32:
+        if base == 16:
+            self.alphabet = '0123456789ABCDEF'
+        elif base == 32:
             self.alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
-        if base == 64:
+        elif base == 58:
+            self.alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+        elif base == 64:
             self.alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
         else:
             self.alphabet = ''
@@ -120,6 +124,14 @@ class BaseN:
             output.close()
         input.close()
 
+    def base_encode_stream(self, inFile):
+        with open(inFile, 'rb') as input:
+            bytes = input.read(self.block_byte)
+            while bytes:
+                print(self.encode_block(bytes), end='', sep='')
+                bytes = input.read(self.block_byte)
+        input.close()
+
     def base_decode(self, inFile, outFile):
         output = open(outFile, 'wb')
         with open(inFile, 'r', encoding="UTF-8") as input:
@@ -130,19 +142,33 @@ class BaseN:
             output.close()
         input.close()
 
+    def base_decode_stream(self, inFile):
+        with open(inFile, 'r', encoding="UTF-8") as input:
+            bytes = input.read(self.symbol_quantity)
+            while bytes:
+                print(self.decode_block(bytes).decode("UTF-8"), end='', sep='')
+                bytes = input.read(self.symbol_quantity)
+        input.close()
+
 
 @click.command()
 @click.argument('input', type=click.Path(exists=True))
-@click.argument('output', type=click.Path())
-@click.option('-b', '--base', default=64, help='Base alphabet length.')
+@click.option('-o', '--output', type=click.Path(), help='Output path.')
+@click.option('-b', '--base', default=64, type=click.IntRange(2, 224), help='Base alphabet length.')
 @click.option('-e', '--encode', 'mode', flag_value='encode', default=True, help='Encode mode.')
 @click.option('-d', '--decode', 'mode', flag_value='decode', help='Decode mode.')
 def main(input, output, base, mode):
     basen = BaseN(base)
     if mode == 'encode':
-        basen.base_encode(input, output)
+        if output:
+            basen.base_encode(input, output)
+        else:
+            basen.base_encode_stream(input)
     elif mode == 'decode':
-        basen.base_decode(input, output)
+        if output:
+            basen.base_decode(input, output)
+        else:
+            basen.base_decode_stream(input)
 
 
 if __name__ == "__main__":
